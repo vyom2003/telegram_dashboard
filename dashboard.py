@@ -101,23 +101,23 @@ else:
             with st.spinner('Wait for graphs...'):
                 st.title("Percent Change Heatmaps by Sender ID")
                 aggregated_df = asyncio.run(create_df_prices(st.session_state["current_selection"]))
-                timeframes_order = ['1 hr', '6 hr', '24 hr', '3 d', '7 d', '2 w', '1 m']
-                aggregated_df['timeframe'] = pd.Categorical(aggregated_df['timeframe'], categories=timeframes_order, ordered=True)
-                for sender_id, group in aggregated_df.groupby('sender_id'):
-                    st.subheader(f"Percent Change Heatmap for Sender ID: {sender_id}")
-                    
-                    # Pivot the data for heatmap
-                    heatmap_data = group.pivot(index='valid_tickers', columns='timeframe', values='price_change')
-                    heatmap_data = heatmap_data.reindex(columns=timeframes_order)
-                    if(len(heatmap_data)>0):
-                    # Create the heatmap
+                if(len(aggregated_df)>0):
+                    timeframes_order = ['1 hr', '6 hr', '24 hr', '3 d', '7 d', '2 w', '1 m']
+                    aggregated_df['timeframe'] = pd.Categorical(aggregated_df['timeframe'], categories=timeframes_order, ordered=True)
+                    for sender_id, group in aggregated_df.groupby('sender_id'):
+                        st.subheader(f"Percent Change Heatmap for Sender ID: {sender_id}")
+                        
+                        # Pivot the data for heatmap
+                        heatmap_data = group.pivot(index='valid_tickers', columns='timeframe', values='price_change')
+                        heatmap_data = heatmap_data.reindex(columns=timeframes_order)
+                        # Create the heatmap
                         plt.figure(figsize=(12, max(6, len(heatmap_data) / 2)))
                         sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label': '% Change'})
                         plt.title(f'Percent Change Heatmap for Sender ID: {sender_id}')
                         plt.xlabel('Timeframe')
                         plt.ylabel('Ticker')
                         plt.show()
-                        
-                    # Show the heatmap in Streamlit
-                    st.pyplot(plt)
-                    plt.close()  # Close the plot to avoid overlapping in Streamlit
+                            
+                        # Show the heatmap in Streamlit
+                        st.pyplot(plt)
+                        plt.close()  # Close the plot to avoid overlapping in Streamlit

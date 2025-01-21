@@ -66,7 +66,8 @@ async def create_df_prices(group_name : str):
     df = df.explode("valid_tickers", ignore_index=True) # to seperate each valid ticker in seperate row
 
     timeframes = ['1 hr', '6 hr', '24 hr', '3 d', '7 d', '2 w', '1 m']
-    
+    if(len(df)==0):
+        return pd.DataFrame({})
     df['price'] = df.apply(lambda row: extract_prices(row, '0 minutes'), axis=1)
     for timeframe in timeframes:
         df[f'price_{timeframe}']=df.apply(lambda row: extract_prices(row, timeframe), axis=1)
