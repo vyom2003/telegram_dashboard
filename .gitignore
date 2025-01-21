@@ -1,6 +1,8 @@
+# Ignore secrets file
 .streamlit/secrets.toml
-./data/*
-./__pycache__/*
-./__pycache__
-./scrapers/__pycache__
-./scrapers/__pycache__/*
+
+# Ignore all files and folders inside the .data directory
+.data/
+
+# Ignore all __pycache__ folders and their contents
+**/__pycache__/
