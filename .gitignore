@@ -1,1 +1,6 @@
 .streamlit/secrets.toml
+./data/*
+./__pycache__/*
+./__pycache__
+./scrapers/__pycache__
+./scrapers/__pycache__/*

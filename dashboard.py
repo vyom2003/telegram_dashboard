@@ -91,7 +91,7 @@ if st.session_state["current_selection"] == "None":
 else:
     st.subheader(f"Messages for {st.session_state['current_selection']}")
     message_count = st.number_input(
-        "Number of messages to display", min_value=1, max_value=5000, value=500
+        "Number of messages to display", min_value=1, value=500
     )
 
     if st.button("Fetch Messages"):
@@ -110,11 +110,12 @@ else:
                     heatmap_data = group.pivot(index='valid_tickers', columns='timeframe', values='price_change')
                     heatmap_data = heatmap_data.reindex(columns=timeframes_order)
                     # Create the heatmap
-                    plt.figure(figsize=(8, 6))
+                    plt.figure(figsize=(12, max(6, len(heatmap_data) / 2)))
                     sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label': '% Change'})
                     plt.title(f'Percent Change Heatmap for Sender ID: {sender_id}')
                     plt.xlabel('Timeframe')
                     plt.ylabel('Ticker')
+                    plt.show()
                     
                     # Show the heatmap in Streamlit
                     st.pyplot(plt)
