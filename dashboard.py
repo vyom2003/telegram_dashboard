@@ -109,14 +109,15 @@ else:
                     # Pivot the data for heatmap
                     heatmap_data = group.pivot(index='valid_tickers', columns='timeframe', values='price_change')
                     heatmap_data = heatmap_data.reindex(columns=timeframes_order)
+                    if(len(heatmap_data)>0):
                     # Create the heatmap
-                    plt.figure(figsize=(12, max(6, len(heatmap_data) / 2)))
-                    sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label': '% Change'})
-                    plt.title(f'Percent Change Heatmap for Sender ID: {sender_id}')
-                    plt.xlabel('Timeframe')
-                    plt.ylabel('Ticker')
-                    plt.show()
-                    
+                        plt.figure(figsize=(12, max(6, len(heatmap_data) / 2)))
+                        sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label': '% Change'})
+                        plt.title(f'Percent Change Heatmap for Sender ID: {sender_id}')
+                        plt.xlabel('Timeframe')
+                        plt.ylabel('Ticker')
+                        plt.show()
+                        
                     # Show the heatmap in Streamlit
                     st.pyplot(plt)
                     plt.close()  # Close the plot to avoid overlapping in Streamlit
