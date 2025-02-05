@@ -4,7 +4,9 @@ import re
 import time
 import json
 from datetime import datetime, timedelta
+import numpy as np
 import streamlit as st
+from database import insert_records, clear_group
 
 API_KEY= st.secrets["birdeye_api"]
 with open('solana.txt', 'r') as f:
@@ -23,7 +25,7 @@ def filter_valid_tickers(row):
 
 def extract_prices(row, timeframe):
     ticker = row['valid_tickers'].lower()
-    date_obj = datetime.fromisoformat(row['date'])
+    date_obj = datetime.fromisoformat(row['date'].isoformat())
     value, unit = timeframe.split()
     value = int(value)
     if unit == 'hr':
@@ -34,8 +36,9 @@ def extract_prices(row, timeframe):
         date_obj =  date_obj + timedelta(weeks=value)
     elif unit == 'm':
         date_obj =  date_obj + timedelta(days=value * 30)
-    unix_time = date_obj.timestamp()
-    if unix_time > time.time(): return None
+    unix_time = int(date_obj.timestamp())
+    if unix_time > time.time():
+        return None
     address = ''
     chain='solana'
     if ticker.lower() in solana_tickers.keys():
@@ -57,8 +60,9 @@ def extract_prices(row, timeframe):
         return response['data']['value']
     return None
 
-async def create_df_prices(group_name : str):
-    message_df = pd.read_csv(f"./data/messages_{group_name}.csv")
+def create_df_prices(message_df : pd.DataFrame, group_name: str, refresh_flag: bool) -> pd.DataFrame:
+    if(refresh_flag):
+        clear_group(group_name)
     message_df.dropna(inplace=True)
     message_df["valid_tickers"] = message_df.apply(filter_valid_tickers, axis=1)
     df = message_df.dropna(subset=["valid_tickers"]).reset_index(drop=True)
@@ -71,21 +75,39 @@ async def create_df_prices(group_name : str):
     df['price'] = df.apply(lambda row: extract_prices(row, '0 minutes'), axis=1)
     for timeframe in timeframes:
         df[f'price_{timeframe}']=df.apply(lambda row: extract_prices(row, timeframe), axis=1)
-    
+    df.fillna(0, inplace=True)
+    df["group_name"] = group_name
+    insert_records(df, group_name)
+
+def aggregate_df(df : pd.DataFrame, timeframe_filter, percentage_change_filter, whitelisted_symbols:str, blacklisted_symbols:str):
+    timeframes = ['1hr', '6hr', '24hr', '3d', '7d', '2w', '1m']
+
+    whitelisted_symbols = whitelisted_symbols.split(",")
+    whitelisted_symbols = [w.strip().upper() for w in whitelisted_symbols]
+
+    blacklisted_symbols = blacklisted_symbols.split(",")
+    blacklisted_symbols = [b.strip().upper() for b in blacklisted_symbols]
+
     for timeframe in timeframes:
-        df[f'price_{timeframe}'] = ((df[f'price_{timeframe}']-df['price'])/df['price'])*100
+        df[f'price_{timeframe}'] = np.where(df[f'price_{timeframe}'] > 0, 
+            ((df[f'price_{timeframe}'] - df['price']) / df['price']) * 100, 
+            0)
+        df = df[df[f"price_{timeframe_filter}"]>=percentage_change_filter]
     
     df.fillna(0, inplace=True)
-    
     melted_df = df.melt(
         id_vars=['sender_id', 'valid_tickers'],
         value_vars=[f'price_{tf}' for tf in timeframes],
         var_name='timeframe',
         value_name='price_change'
     )
-    melted_df['timeframe'] = melted_df['timeframe'].str.replace('price_', '')
 
+    melted_df['timeframe'] = melted_df['timeframe'].str.replace('price_', '')
+    melted_df["valid_tickers"] = melted_df["valid_tickers"].str.upper()
     aggregated_df = melted_df.groupby(['sender_id', 'valid_tickers', 'timeframe'], as_index=False).mean()
 
-    return aggregated_df
     
+    if len(whitelisted_symbols)>1 or whitelisted_symbols[0]!="":
+        aggregated_df = aggregated_df.loc[aggregated_df["valid_tickers"].isin(whitelisted_symbols)]
+    aggregated_df = aggregated_df.loc[~aggregated_df["valid_tickers"].isin(blacklisted_symbols)]
+    return aggregated_df
