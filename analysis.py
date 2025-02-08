@@ -95,13 +95,15 @@ def aggregate_df(df : pd.DataFrame, timeframe_filter, percentage_change_filter, 
         df = df[df[f"price_{timeframe_filter}"]>=percentage_change_filter]
     
     df.fillna(0, inplace=True)
+    print(df.keys())
     melted_df = df.melt(
-        id_vars=['sender_id', 'valid_tickers'],
+        id_vars=['sender_id', 'valid_tickers', 'date'],  # Include 'date' as an id_var
         value_vars=[f'price_{tf}' for tf in timeframes],
         var_name='timeframe',
         value_name='price_change'
-    )
+    ).assign(valid_tickers=lambda x: x['valid_tickers'] + "_" + x['date'].astype(str))  # Modify valid_tickers
 
+    print(melted_df.keys())
     melted_df['timeframe'] = melted_df['timeframe'].str.replace('price_', '')
     melted_df["valid_tickers"] = melted_df["valid_tickers"].str.upper()
     aggregated_df = melted_df.groupby(['sender_id', 'valid_tickers', 'timeframe'], as_index=False).mean()

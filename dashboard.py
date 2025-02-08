@@ -168,7 +168,7 @@ if __name__ == "__main__":
                         heatmap_data = group.pivot(index='valid_tickers', columns='timeframe', values='price_change')
                         heatmap_data = heatmap_data.reindex(columns=timeframes_order)
                         # Create the heatmap
-                        plt.figure(figsize=(8, len(heatmap_data)/4))
+                        plt.figure(figsize=(20, len(heatmap_data)/4))
                         sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label': '% Change'})
                         plt.title(f'Percent Change Heatmap for Sender ID: {sender_id}')
                         plt.xlabel('Timeframe')
