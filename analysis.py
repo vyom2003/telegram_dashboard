@@ -104,10 +104,9 @@ def aggregate_df(df : pd.DataFrame, timeframe_filter, percentage_change_filter, 
 
     melted_df['timeframe'] = melted_df['timeframe'].str.replace('price_', '')
     melted_df["valid_tickers"] = melted_df["valid_tickers"].str.upper()
-    aggregated_df = melted_df.groupby(['sender_id', 'valid_tickers', 'timeframe'], as_index=False).mean()
-
     
     if len(whitelisted_symbols)>1 or whitelisted_symbols[0]!="":
-        aggregated_df = aggregated_df.loc[aggregated_df["valid_tickers"].isin(whitelisted_symbols)]
-    aggregated_df = aggregated_df.loc[~aggregated_df["valid_tickers"].isin(blacklisted_symbols)]
-    return aggregated_df
+        melted_df = melted_df.loc[melted_df["valid_tickers"].isin(whitelisted_symbols)]
+    melted_df = melted_df.loc[~melted_df["valid_tickers"].isin(blacklisted_symbols)]
+    melted_df["valid_tickers"] = melted_df["valid_tickers"] + " " + melted_df["date"].astype(str)
+    return melted_df
