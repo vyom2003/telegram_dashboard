@@ -163,12 +163,12 @@ if __name__ == "__main__":
                     aggregated_df['timeframe'] = pd.Categorical(aggregated_df['timeframe'], categories=timeframes_order, ordered=True)
                     for sender_id, group in aggregated_df.groupby('sender_id'):
                         st.subheader(f"Percent Change Heatmap for Sender ID: {sender_id}")
-                        
+                        group = group.drop_duplicates(subset=['valid_tickers', 'timeframe'])
                         # Pivot the data for heatmap
                         heatmap_data = group.pivot(index='valid_tickers', columns='timeframe', values='price_change')
                         heatmap_data = heatmap_data.reindex(columns=timeframes_order)
                         # Create the heatmap
-                        plt.figure(figsize=(8, len(heatmap_data)/4))
+                        plt.figure(figsize=(20, len(heatmap_data)/4))
                         sns.heatmap(heatmap_data, annot=True, cmap='coolwarm', fmt='.2f', cbar_kws={'label': '% Change'})
                         plt.title(f'Percent Change Heatmap for Sender ID: {sender_id}')
                         plt.xlabel('Timeframe')
